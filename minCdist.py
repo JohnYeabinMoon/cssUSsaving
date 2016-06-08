@@ -24,4 +24,9 @@ def minCdist(thetaVec, data):
 	mhoRescaled=scaleFac0_mho+scaleFac1_mho*mhoSeries;  # equation (8)
 	
 	for k in range(mhoSeries):
-
+		print 'Calculating Quarter'
+		print k
+		mhoBase = mhoRescaled[k];
+    		initializeParams;
+    		scriptmEBase = scriptmE;
+    		scriptcEBase = scriptcE;
