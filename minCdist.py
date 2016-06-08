@@ -23,5 +23,5 @@ def minCdist(thetaVec, data):
 	debtLimPDVrescaled=scaleFac0_CEA+scaleFac1_CEA*CEAseries; # equation (7)	
 	mhoRescaled=scaleFac0_mho+scaleFac1_mho*mhoSeries;  # equation (8)
 	
-
+	for k in range(mhoSeries):
 
