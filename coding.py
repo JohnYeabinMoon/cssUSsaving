@@ -22,5 +22,7 @@ thetaBase=0.05;
 
 data = np.array([wyRatSeries, mhoSeries, CEAseries, saving_rate[25:203]])
 
+
+
 initialValues = np.array([0, .0003, 1, 4, .01]) 
 initialValues.shape = (5,1)
