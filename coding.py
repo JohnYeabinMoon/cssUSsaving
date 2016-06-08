@@ -20,7 +20,9 @@ thetaBase=0.05;
 
 # cExAll=[]; cEyAll=[]; mcPathAll=[]; scriptmEBaseAll=[]; steadyStateMC=[]; PiAll=[];
 
-data = np.array([wyRatSeries, mhoSeries, CEAseries, saving_rate[25:203]])
+d = {'col1': wyRatSeries, 'col2': mhoSeries, 'col3': CEAseries, 'col4': saving_rate[25:203]}
+data = pd.DataFrame(data=d, index=index)
+#data = np.array([wyRatSeries, mhoSeries, CEAseries, saving_rate[25:203]])
 
 initialValues = np.array([0, .0003, 1, 4, .01]) 
 initialValues.shape = (5,1)
