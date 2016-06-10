@@ -9,13 +9,10 @@ def minCdist(thetaVec, data):
 	scaleFac1_CEA=thetaVec[3];
 	thetaBase=thetaVec[4];
 	
-	#########################
-	# data frame work should be changed.#####
-	wyRatSeries=data(:,1);
-	mhoSeries=data(:,2);
-	CEAseries=data(:,3);
-	saving_rate=data(:,4);
-	#########################
+	wyRatSeries = data['wyRatSeries']
+	mhoSeries= data['mhoSeries']
+	CEAseries = data['CEAseries']
+	saving_rate = data['saving_rate']
 	
 	steadyStateMC=[]; 
 	steadyStateMCexPDVdebt=[];
@@ -23,10 +20,16 @@ def minCdist(thetaVec, data):
 	debtLimPDVrescaled=scaleFac0_CEA+scaleFac1_CEA*CEAseries; # equation (7)	
 	mhoRescaled=scaleFac0_mho+scaleFac1_mho*mhoSeries;  # equation (8)
 	
-	for k in range(mhoSeries):
-		print 'Calculating Quarter'
+	for k in range(len(wyRatSeries)):   
+		print "Calculating Quarter"
 		print k
 		mhoBase = mhoRescaled[k];
-    		initializeParams;
+		
+		# Need to handle the following#####
+		initializeParams;
     		scriptmEBase = scriptmE;
     		scriptcEBase = scriptcE;
+    		##############################
+    	
+	    	debtLimPDV=debtLimPDVrescaled[k];
+    
