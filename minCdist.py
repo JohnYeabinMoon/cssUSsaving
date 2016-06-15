@@ -25,11 +25,18 @@ def minCdist(thetaVec, data):
 		print k
 		mhoBase = mhoRescaled[k];
 		
-		# Need to handle the following#####
-		initializeParams;
-    		scriptmEBase = scriptmE;
-    		scriptcEBase = scriptcE;
-    		##############################
+		
+		#initializeParams;
+		#How to read initializeParams.py????????
+		
+		scriptmEBase = scriptmE;   # scriptmE from resetParams
+	    scriptcEBase = scriptcE;   # scriptcE from resetParams
+	    debtLimPDV=debtLimPDVrescaled[k];
+	    
+	    scriptmEcea = 1+(bigR/(biggamma+myZeta*biggamma-bigR))-debtLimPDV;
+   		scriptcEcea = (1-scriptR**(-1))*scriptmEcea+scriptR**(-1);
+    	scriptmEexPDVdebt = 1+(bigR/(biggamma+myZeta*biggamma-bigR));
+    	scriptcEexPDVdebt = (1-scriptR**(-1))*scriptmEexPDVdebt+scriptR**(-1);
+    	steadyStateMC=[steadyStateMC; scriptmEcea scriptcEcea scriptmEexPDVdebt scriptcEexPDVdebt]; #### Dimension issue??
     	
-	    	debtLimPDV=debtLimPDVrescaled[k];
-    
+    	# FindStableArm
