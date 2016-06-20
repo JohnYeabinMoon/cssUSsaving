@@ -1,0 +1,101 @@
+def scriptcEtFromtp1(scriptmEtp1,scriptcEtp1,biggamma,mybeta,bigR,rho,mho,kappa):
+	return biggamma * (mybeta*bigR)**(-1/rho) * scriptcEtp1 * (1 + mho * ((scriptcEtp1/(kappa * (scriptmEtp1 - 1)))**rho - 1))**(-1/rho)
+
+
+def scriptmEtFromtp1(scriptmEtp1,scriptcEtp1,biggamma,mybeta,bigR,rho,mho,kappa):
+	return (biggamma / bigR)*(scriptmEtp1 - 1) + scriptcEtFromtp1(scriptmEtp1,scriptcEtp1,biggamma,mybeta,bigR,rho,mho,kappa)
+
+def kappaEtFromtp1(scriptmEtp1, scriptcEtp1, kappaEtp1, scriptmEt, scriptcEt,kappa,scriptR,Beth,rho,mho):
+	scriptcUtp1 = kappa * (scriptmEt - scriptcEt) * scriptR;
+	natural = Beth * scriptR * (1 / (-rho * scriptcEt**(-rho-1))) * ((1-mho) * (-rho * scriptcEtp1**(-rho-1)) * kappaEtp1 + mho * (-rho * scriptcUtp1**(-rho-1)) *kappa);
+	x = natural / (natural + 1)
+	return x
+
+def kappaEPtFromtp1(scriptmEtp1, scriptcEtp1, kappaEtp1, scriptmEt, scriptcEt, kappaEt, kappaEPtp1,scriptR,kappa,Beth,mho,rho):
+	scriptcUtp1 = (scriptmEt - scriptcEt) * scriptR * kappa;
+	y = (Beth * scriptR**2 * (1-kappaEt)**2 * (mho * kappa**2 * CRRAppp(scriptcUtp1,rho) + (1-mho) * kappaEtp1**2 * CRRAppp(scriptcEtp1,rho) + (1-mho) * (-rho * scriptcEtp1**(-rho-1)) * kappaEPtp1) - (kappaEt)**2 * CRRAppp(scriptcEt,rho));
+	z = (-rho * scriptcEt**(-rho-1)) + Beth * scriptR * (mho * kappa * (-rho * scriptcUtp1**(-rho-1)) + (1-mho) * kappaEtp1 * (-rho * scriptcEtp1**(-rho-1)));
+	x = y/z;
+	return x
+
+def BackShoot(InitialPoints,scriptmE,biggamma,mybeta,bigR,rho,mho,kappa,scriptR,Beth,littleV):
+	VerboseOutput=0;
+	scriptmMaxBound = 100 * scriptmE;
+	scriptmMinBound = 1; 
+	Counter = 0;
+	
+	PointsList = np.zeros((10000,5))
+	PointsList[0,:] = InitialPoints
+	
+	scriptmPrev = InitialPoints[0];
+	scriptcPrev = InitialPoints[1];
+	kappaPrev = InitialPoints[2];
+	scriptvPrev = InitialPoints[3];
+	kappaPPrev = InitialPoints[4];
+	
+	while ((scriptmPrev > scriptmMinBound) and (scriptmPrev <= scriptmMaxBound)):
+		scriptmNow = scriptmEtFromtp1(scriptmPrev,scriptcPrev,biggamma,mybeta,bigR,rho,mho,kappa);
+		scriptcNow = scriptcEtFromtp1(scriptmPrev,scriptcPrev,biggamma,mybeta,bigR,rho,mho,kappa);
+		kappaNow = kappaEtFromtp1(scriptmPrev, scriptcPrev, kappaPrev, scriptmNow, scriptcNow,kappa,scriptR,Beth,rho,mho);
+		kappaPNow = kappaEPtFromtp1(scriptmPrev, scriptcPrev, kappaPrev, scriptmNow, scriptcNow, kappaNow, kappaPPrev,scriptR,kappa,Beth,mho,rho);
+		scriptvNow = (scriptcNow**(1-rho))/(1-rho) + mybeta * (biggamma**(1-rho)) * ((1-mho) * scriptvPrev + mho * vUPF(scriptR * (scriptmNow - scriptcNow),rho,kappa,littleV,bigR,mybeta));
+   	    newDataPoint = [scriptmNow, scriptcNow, kappaNow, scriptvNow, kappaPNow];
+	    PointsList[Counter+1,:] = newDataPoint;
+	    scriptmPrev = scriptmNow;
+	    scriptcPrev = scriptcNow;
+	    kappaPrev = kappaNow;
+    	scriptvPrev = scriptvNow;
+   		kappaPPrev = kappaPNow;
+        Counter += 1;
+    PointsList=PointsList[0:(Counter+1),:];    # Need to check
+	return PointsList     
+
+
+def cETaylorNearTarget(filldelta,scriptcE,kappaE,kappaEP,kappaEPP,kappaEPPP):
+	x = scriptcE + filldelta * kappaE + (1/2) * (filldelta**2) * kappaEP + (1/6) * (filldelta**3) * kappaEPP + (1/24) * (filldelta**4) * kappaEPPP;
+	return x
+
+
+
+
+def EulerPointsStartingFromSSPlus(filldelta,scriptmE,scriptcE,scriptvE,kappaE,kappaEP,kappaEPP,kappaEPPP,biggamma,mybeta,bigR,rho,mho,kappa,scriptR,Beth,littleV):
+	scriptmStart = scriptmE + filldelta;
+	kappaStart = kappaE + kappaEP * filldelta + kappaEPP * (filldelta**2)/2 + kappaEPPP * (filldelta**3)/6;
+	kappaPStart = kappaEP + kappaEPP * filldelta + kappaEPPP * (filldelta**2)/2;
+	scriptcStart = cETaylorNearTarget(filldelta,scriptcE,kappaE,kappaEP,kappaEPP,kappaEPPP);
+	current = 0;
+	places = 1000;
+	iterator = filldelta/places;
+	areasum = 0;
+	
+	while current < filldelta:
+		areasum = areasum + CRRAp(cETaylorNearTarget(current,scriptcE,kappaE,kappaEP,kappaEPP,kappaEPPP),rho)*iterator;
+   	 	current = current + iterator;
+   	
+   	scriptvStart = scriptvE + areasum;
+
+	################### need to check the dimension of StartPoint
+	StartPoint =[scriptmStart, scriptcStart, kappaStart, scriptvStart, kappaPStart];
+	PointsList = BackShoot(StartPoint,scriptmE,biggamma,mybeta,bigR,rho,mho,kappa,scriptR,Beth,littleV);
+	return PointsList
+
+	
+
+def sortLowerArm(EulerPoints):
+    tempLowerArm1 = np.sort(EulerPoints)
+    tempLowerArm2 = EulerPoints[::-1]
+    y1 = tempLowerArm1[:,0]
+    y2 = tempLowerArm1[:,1]
+    y3 = tempLowerArm2[:,2]
+    y4 = tempLowerArm1[:,3]
+    y5 = tempLowerArm1[:,4]
+    y1.shape=(154,1)
+    y2.shape=(154,1)
+    y3.shape=(154,1)
+    y4.shape=(154,1)
+    y5.shape=(154,1)
+    
+    flippedlist = np.hstack([y1,y2,y3,y4,y5]);
+    return flippedlist
+	
+	
