@@ -43,6 +43,9 @@ data = data[['wyRat','unemp_pred','CEA','saving_rate']] # delete index column
 data.columns = 'wyRatSeries','mhoSeries','CEAseries','saving_rate'
 
 
+<<<<<<< HEAD
+# cExAll=[]; cEyAll=[]; mcPathAll=[]; scriptmEBaseAll=[]; steadyStateMC=[]; PiAll=[];
+=======
 cExAll=[]; cEyAll=[]; mcPathAll=[]; scriptmEBaseAll=[]; steadyStateMC=[]; PiAll=[];
 
 # Consider the case minimizeObjFuncInd = 0
@@ -58,5 +61,6 @@ mhoRescaled_mean=mhoRescaled_est.mean();
 ceaRescaled_mean=debtLimPDVrescaled_est.mean();
 CEAmean=CEAseries.mean();
 UnempMean=mhoSeries.mean();
+>>>>>>> master
 
 

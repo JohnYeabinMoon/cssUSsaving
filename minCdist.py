@@ -23,7 +23,6 @@ def minCdist(thetaVec, data):
 	for k in range(len(wyRatSeries)):   
 		print "Calculating Quarter"
 		print k
-		mhoBase = mhoRescaled[k];
 		
 		
 		#initializeParams;
