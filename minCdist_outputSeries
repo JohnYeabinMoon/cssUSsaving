@@ -1,0 +1,177 @@
+# See the parameter bracket (6). The order is different here.
+# scaleFac0_mho is theta_mho with a bar, the fourth variable in (6)
+# scaleFac0_CEA is theta_h with a bar, the second variable in (6)
+# thetaBase is 1 - beta
+def minCdist_outputSeries(thetaVec, data):
+	scaleFac0_mho=thetaVec[0];    
+	scaleFac1_mho=thetaVec[1];
+	scaleFac0_CEA=thetaVec[2];
+	scaleFac1_CEA=thetaVec[3];
+	thetaBase=thetaVec[4];
+
+	
+	wyRatSeries = data['wyRatSeries']
+	mhoSeries= data['mhoSeries']
+	CEAseries = data['CEAseries']
+	saving_rate = data['saving_rate']
+	
+	
+	nPersBackshoot=1000;         # number of periods to simulate
+	nQuarters=len(mhoSeries);
+	mhoRescaled=scaleFac0_mho+scaleFac1_mho*mhoSeries;   		# equation (8)
+	debtLimPDVrescaled=scaleFac0_CEA+scaleFac1_CEA*CEAseries;   # equation (7)
+	steadyStateMC=np.zeros((nQuarters,4))
+	
+	# need to test
+	mcPathAll=[];
+	for i in range(len(mhoSeries)):
+    	mcPathAll.append(np.array(np.zeros((nPersBackshoot+2,2))))
+	cRescaledFull = np.zeros((nPersBackshoot+2,nQuarters));
+	mRescaledFull = np.zeros((nPersBackshoot+2,nQuarters));
+
+	for k in range(nQuarters):
+		mhoBase = mhoRescaled[k];
+   		debtLimPDV=debtLimPDVrescaled[k];
+   		
+   		# run initializeParams#################################################
+   		# initializeParams######################################################
+   		epsilon = 0.01;
+		littleRBase = 0.04/4;  
+		littleGBase = 0.01/4;
+		rhoBase = 2;
+		VerboseOutput = 0;
+   		
+   		# resetParams
+   		mho = mhoBase;
+		theta = thetaBase;
+		littleR = littleRBase;
+		littleG = littleGBase;
+		rho = rhoBase;
+   		
+   		# setValues##################################################################
+   		mybeta = 1/(1+theta);    # from resetParams.py
+		bigR = littleR + 1; 	 # from resetParams.py
+		bigG = littleG + 1; 	 # from resetParams.py
+
+		biggamma = bigG;
+		scriptR = bigR/biggamma; # net interest factor (R normalized by wage growth)
+		Lambda = (bigR**(-1))*(bigR*mybeta)**(1/rho);  # from resetParams.py  # lambda -> Lambda
+		kappa = 1-Lambda; 
+
+
+		# Various impatience factors
+		scriptPGrowth = (bigR*mybeta)**(1/rho)/biggamma;
+		scriptPReturn = (bigR*mybeta)**(1/rho)/bigR;
+		scriptpgrowth = log(scriptPGrowth);
+		scriptpreturn = log(scriptPReturn);
+   		
+   		# Check for Gamma Impatience###########
+		if scriptPGrowth >= 1:
+			print '(bigR*mybeta)^(1/rho)/biggamma = %d' % ((bigR*mybeta)**(1/rho)/biggamma)
+			print 'bigR = %d' % bigR
+			print 'mybeta = %d' % mybeta
+			print 'biggamma = %d' % biggamma
+			print 'Aborting: Employed Consumer Not Growth Impatient.' # need to change the color RED
+
+		# Check for BigR impatience
+		if scriptPReturn >= 1:
+			print 'Aborting: Employed Consumer Not Return Impatient.' # need to change the color RED
+		########################################
+		Pi = (1+(scriptPGrowth**(-rho)-1)/mho)**(1/rho);
+		littleH = (1/(1-bigG/bigR));
+		myZeta = scriptR*kappa*Pi;
+
+		# The steady state values for the employed and unemployed consumer
+		scriptmE = 1+(bigR/(biggamma+myZeta*biggamma-bigR));
+		scriptcE = (1-scriptR**(-1))*scriptmE+scriptR**(-1);
+		scriptaE = scriptmE - scriptcE;
+		scriptbE = scriptaE*scriptR;
+		scriptyE = scriptaE*(scriptR-1)+1;
+		scriptxE = scriptyE - scriptcE;
+		scriptbU = scriptbE;
+		scriptmU = (scriptmE - scriptcE) * scriptR;
+		scriptcU = scriptmU * kappa;
+
+		littleV = 1/(1-mybeta*((bigR*mybeta)**((1/rho)-1)));
+
+   		scriptvU = CRRA(scriptcU,rho)*littleV;
+		scriptvE = (CRRA(scriptcE,rho) + mybeta*(biggamma**(1-rho))*mho*vUPF(scriptaE * scriptR,rho,kappa,littleV,bigR,mybeta))/(1-mybeta*(biggamma**(1-rho)*(1-mho)));
+
+		Beth = scriptR * mybeta * biggamma**(1-rho);
+		
+		## Find the limiting MPC as assets approach zero
+		kappaEMax = kappaLim0Find(Beth,scriptR,mho,kappa,rho,Lambda);
+		kappaE = kappaEFind(rho,mho,kappa,scriptR,Beth,scriptcE,scriptcU);
+		kappaEP = kappaEPFind(kappaE,kappa,rho,mho,Beth,scriptR,scriptcE,scriptcU);
+		kappaEPP = kappaEPPFind(rho,mho,scriptR,kappa,kappaE,kappaEP,Beth,scriptcE,scriptcU);
+		kappaEPPP = kappaEPPPFind(rho,mho,kappa,kappaE,kappaEP,kappaEPP,Beth,scriptR,scriptcE,scriptcU);
+
+		SteadyStateVals = np.array((scriptbE, scriptmE, scriptcE, scriptaE, kappaE, kappaEP, scriptvE));
+		##End setValues##############################################################
+
+
+
+    	scriptmEBase = scriptmE;
+    	scriptcEBase = scriptcE;
+    	
+    	scriptmEcea = 1+(bigR/(biggamma+myZeta*biggamma-bigR))-debtLimPDV;
+	    scriptcEcea = (1-scriptR**(-1))*scriptmEcea+scriptR**(-1);
+    	scriptmEexPDVdebt = 1+(bigR/(biggamma+myZeta*biggamma-bigR));
+    	scriptcEexPDVdebt = (1-scriptR**(-1))*scriptmEexPDVdebt+scriptR**(-1);
+    	steadyStateMC[k,:] = [scriptmEcea, scriptcEcea, scriptmEexPDVdebt, scriptcEexPDVdebt]; 
+    
+    
+ 		######FindStableArm########################   
+		StableArmBelowSS = sortLowerArm(EulerPointsStartingFromSSPlus(-epsilon,scriptmE,scriptcE,scriptvE,kappaE,kappaEP,kappaEPP,kappaEPPP,biggamma,mybeta,bigR,rho,mho,kappa,scriptR,Beth,littleV));
+		IterLength = StableArmBelowSS.shape;
+		IterLength = IterLength[0];
+		DscriptmFirst = StableArmBelowSS[IterLength-1,0] - StableArmBelowSS[IterLength-2,0];
+		PrecisionAugmentationFactor = 3;
+		
+		i=1;
+		while i < PrecisionAugmentationFactor:
+			tempEpsilon = -epsilon - DscriptmFirst * (i/PrecisionAugmentationFactor);
+	    	tempArm = EulerPointsStartingFromSSPlus(tempEpsilon,scriptmE,scriptcE,scriptvE,kappaE,kappaEP,kappaEPP,kappaEPPP,biggamma,mybeta,bigR,rho,mho,kappa,scriptR,Beth,littleV);
+    		x1 = tempArm.shape
+			x2 = x1[0]
+    		tempArm = tempArm(1:min([IterLength, x2]),:);
+    		StableArmBelowSS = np.vstack([StableArmBelowSS , tempArm])
+    		i += 1;
+
+    	StableArmBelowSS = sortLowerArm(StableArmBelowSS);
+    	StableArmAboveSS = EulerPointsStartingFromSSPlus(epsilon,scriptmE,scriptcE,scriptvE,kappaE,kappaEP,kappaEPP,kappaEPPP,biggamma,mybeta,bigR,rho,mho,kappa,scriptR,Beth,littleV);
+    	ETarget = np.array((scriptmE, scriptcE, kappaE, scriptvE, kappaEP ))
+    	ETarget.shape=(1,5)
+    	StableArmPoints = np.vstack([StableArmBelowSS, ETarget, StableArmAboveSS])
+    	SAlength = len(np.transpose(StableArmPoints))
+    	
+    	scriptmBot = StableArmPoints[0,0];
+		scriptcBot = StableArmPoints[0,1];
+		kappaBot = StableArmPoints[0,2];
+		scriptvBot = StableArmPoints[0,3];
+		kappaPBot = StableArmPoints[0,4];
+		
+		scriptmTop = StableArmPoints[SAlength-1,0];
+		scriptcTop = StableArmPoints[SAlength-1,1];
+		kappaTop = StableArmPoints[SAlength-1,2];
+		scriptvTop = StableArmPoints[SAlength-1,3];
+		kappaPTop = StableArmPoints[SAlength-1,4];
+
+		scriptmVec = StableArmPoints[:,0];
+		scriptcVec = StableArmPoints[:,1];
+		kappaVec = StableArmPoints[:,2];
+		scriptvVec = StableArmPoints[:,3];
+		kappaPVec = StableArmPoints[:,4];
+		
+		uPVec = CRRAp(scriptcVec,rho);
+		uPPVec = CRRApp(scriptcVec,rho);
+		uPPPVec = CRRAppp(scriptcVec,rho);
+		scriptvPVec = uPVec;
+		scriptvPPVec = uPPVec * kappaVec;
+
+		kappaEPAtZero = 2 * (scriptcBot - scriptmBot * kappaEMax) / (scriptmBot**2);
+
+
+
+
+

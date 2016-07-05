@@ -9,13 +9,10 @@ def minCdist(thetaVec, data):
 	scaleFac1_CEA=thetaVec[3];
 	thetaBase=thetaVec[4];
 	
-	#########################
-	# data frame work should be changed.#####
-	wyRatSeries=data(:,1);
-	mhoSeries=data(:,2);
-	CEAseries=data(:,3);
-	saving_rate=data(:,4);
-	#########################
+	wyRatSeries = data['wyRatSeries']
+	mhoSeries= data['mhoSeries']
+	CEAseries = data['CEAseries']
+	saving_rate = data['saving_rate']
 	
 	steadyStateMC=[]; 
 	steadyStateMCexPDVdebt=[];
@@ -23,5 +20,22 @@ def minCdist(thetaVec, data):
 	debtLimPDVrescaled=scaleFac0_CEA+scaleFac1_CEA*CEAseries; # equation (7)	
 	mhoRescaled=scaleFac0_mho+scaleFac1_mho*mhoSeries;  # equation (8)
 	
-
-
+	for k in range(len(wyRatSeries)):   
+		print "Calculating Quarter"
+		print k
+		
+		
+		#initializeParams;
+		#How to read initializeParams.py????????
+		
+		scriptmEBase = scriptmE;   # scriptmE from resetParams
+	    scriptcEBase = scriptcE;   # scriptcE from resetParams
+	    debtLimPDV=debtLimPDVrescaled[k];
+	    
+	    scriptmEcea = 1+(bigR/(biggamma+myZeta*biggamma-bigR))-debtLimPDV;
+   		scriptcEcea = (1-scriptR**(-1))*scriptmEcea+scriptR**(-1);
+    	scriptmEexPDVdebt = 1+(bigR/(biggamma+myZeta*biggamma-bigR));
+    	scriptcEexPDVdebt = (1-scriptR**(-1))*scriptmEexPDVdebt+scriptR**(-1);
+    	steadyStateMC=[steadyStateMC; scriptmEcea scriptcEcea scriptmEexPDVdebt scriptcEexPDVdebt]; #### Dimension issue??
+    	
+    	# FindStableArm
